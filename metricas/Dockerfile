@@ -9,3 +9,5 @@ COPY . .
 
 # Comando para iniciar el registro de métricas
 CMD ["python", "logger.py"]
+
+ENV PYTHONUNBUFFERED=1

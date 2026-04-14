@@ -4,6 +4,6 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir redis
 
-COPY ..
+COPY . .
 
 CMD ["python", "logger.py"]

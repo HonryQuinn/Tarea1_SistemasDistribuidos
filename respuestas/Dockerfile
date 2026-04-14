@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir pandas redis
 
 COPY . .
 
-CMD ["python","engine.py"]
+CMD ["python","-u","engine.py"]
+
+ENV PYTHONUNBUFFERED=1
 
 

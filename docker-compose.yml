@@ -1,35 +1,63 @@
 services:
+
   cache:
-    image: redis:7.2-alpine
+    image: redis:7.2-alpine #imagen oficial de redis
     container_name: sistema_cache
-    # ola, evaluar con 50, 200, 500 mb y politicas LRU/FIFO
     command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   generador_respuestas:
     build: ./respuestas
     container_name: servicio_respuestas
     volumes:
-      - /home/blade/Code/SD/Tarea1/dataset:/app/data
+      - ./dataset:/app/data     # ruta relativa, más portable
     environment:
       - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - DATASET_PATH=/app/data/buildings.csv # ruta dentro del contenedor
+    networks:
+      - app-network
     depends_on:
-      - cache
+      cache:
+        condition: service_healthy
 
   generador_trafico:
     build: ./trafico
     container_name: servicio_trafico
     environment:
       - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - RESPUESTAS_HOST=generador_respuestas
+    networks:
+      - app-network
     depends_on:
-      - cache
-      - generador_respuestas
+      cache:
+        condition: service_healthy
+      generador_respuestas:
+        condition: service_started
 
   metricas:
     build: ./metricas
     container_name: servicio_metricas
-    environment: 
+    environment:
       - REDIS_HOST=cache
+      - REDIS_PORT=6379
+    ports:
+      - "8086:8086"
+    networks:
+      - app-network
     depends_on:
-      - cache
+      cache:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
