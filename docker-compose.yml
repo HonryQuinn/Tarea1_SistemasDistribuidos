@@ -1,0 +1,35 @@
+services:
+  cache:
+    image: redis:7.2-alpine
+    container_name: sistema_cache
+    # ola, evaluar con 50, 200, 500 mb y politicas LRU/FIFO
+    command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+
+  generador_respuestas:
+    build: ./respuestas
+    container_name: servicio_respuestas
+    volumes:
+      - /home/blade/Code/SD/Tarea1/dataset:/app/data
+    environment:
+      - REDIS_HOST=cache
+    depends_on:
+      - cache
+
+  generador_trafico:
+    build: ./trafico
+    container_name: servicio_trafico
+    environment:
+      - REDIS_HOST=cache
+    depends_on:
+      - cache
+      - generador_respuestas
+
+  metricas:
+    build: ./metricas
+    container_name: servicio_metricas
+    environment: 
+      - REDIS_HOST=cache
+    depends_on:
+      - cache
