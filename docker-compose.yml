@@ -1,7 +1,6 @@
 services:
-
   cache:
-    image: redis:7.2-alpine #imagen oficial de redis
+    image: redis:7.2-alpine
     container_name: sistema_cache
     command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
     ports:
@@ -18,11 +17,12 @@ services:
     build: ./respuestas
     container_name: servicio_respuestas
     volumes:
-      - ./dataset:/app/data     # ruta relativa, más portable
+      - ./dataset:/app/data
+      - ./respuestas:/app
     environment:
       - REDIS_HOST=cache
       - REDIS_PORT=6379
-      - DATASET_PATH=/app/data/buildings.csv # ruta dentro del contenedor
+      - DATASET_PATH=/app/data/buildings.csv
     networks:
       - app-network
     depends_on:
@@ -36,6 +36,8 @@ services:
       - REDIS_HOST=cache
       - REDIS_PORT=6379
       - RESPUESTAS_HOST=generador_respuestas
+    volumes:
+      - ./trafico:/app
     networks:
       - app-network
     depends_on:
