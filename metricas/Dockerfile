@@ -8,6 +8,6 @@ RUN pip install --no-cache-dir redis
 COPY . .
 
 # Comando para iniciar el registro de métricas
-CMD ["python", "logger.py"]
+CMD ["python", "metricas.py"]
 
 ENV PYTHONUNBUFFERED=1

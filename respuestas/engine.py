@@ -83,8 +83,14 @@ def procesar(consulta):
     zona           = consulta["zona"]
     zona_b         = consulta.get("zona_b")
     confidence_min = consulta.get("confidence_min", 0.0)
-    bins           = consulta.get("bins", 5)
+    bins = consulta.get("bins", 5)
+    if bins is None:
+        bins = 5
+    bins = int(bins)
+    modo = consulta.get("modo", "uniforme")
     cache_key      = consulta["cache_key"]
+
+    t0 = time.perf_counter()
 
     if tipo == "Q1":
         resultado = q1_count(zona, confidence_min)
@@ -96,6 +102,9 @@ def procesar(consulta):
         resultado = q4_compare(zona, zona_b, confidence_min)
     elif tipo == "Q5":
         resultado = q5_confidence_dist(zona, bins)
+
+    r.rpush(f"{modo}:latencies", (time.perf_counter() - t0) * 1000)
+    r.rpush(f"{modo}:timestamps", time.time())
 
     r.set(cache_key, json.dumps(resultado), ex=60)
     print(f"Calculado y guardado | {cache_key}")

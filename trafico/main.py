@@ -4,7 +4,6 @@ import random
 import time
 import json
 
-
 # Configuración inicial
 try:
     r = redis.Redis(host='cache', port=6379, decode_responses=True)
@@ -17,32 +16,38 @@ ZONAS = ["Z1", "Z2", "Z3", "Z4", "Z5"] # [cite: 95]
 CONSULTAS = ["Q1", "Q2", "Q3", "Q4", "Q5"] # [cite: 35]
 N_PEDIDOS = 1000 # Cantidad de consultas por experimento
 
-def enviar_a_sistema(key, tipo, zona, conf, zona_b=None, bins=None):
-    # 1. Intentar obtener la respuesta desde Redis
+def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=None):
+    t0 = time.perf_counter()
     respuesta = r.get(key)
+    latencia_ms = (time.perf_counter() - t0) * 1000
     
     if respuesta:
         # --- CACHE HIT ---
-        r.incr("stats:hits")
+        # Usamos llaves distintas para el contador y para la lista de latencias
+        r.incr(f"{modo}:hits") 
+        r.rpush(f"{modo}:latencies", latencia_ms)
+        r.rpush(f"{modo}:timestamps", time.time())
         print(f"[HIT ] Key: {key}") 
     else:
         # --- CACHE MISS ---
-        r.incr("stats:miss")
+        r.incr(f"{modo}:misses")
         print(f"[MISS] Key: {key} -> Enviando a cola", flush=True)
         
-        # 2. Creamos el diccionario con el formato que engine.py espera
         datos_consulta = {
             "tipo": tipo,
             "zona": zona,
             "zona_b": zona_b,
             "confidence_min": conf,
             "bins": bins,
-            "cache_key": key
+            "cache_key": key,
+            "modo": modo # Ahora pasamos la variable correctamente
         }
-        
-        # 3. Enviamos a la cola que el engine.py está escuchando
         r.lpush("cola_consultas", json.dumps(datos_consulta))
     
+    # Métricas de desalojo (Evictions)
+    info = r.info("stats")
+    r.rpush(f"{modo}:evictions", f"{time.time()}:{info['evicted_keys']}")
+
 def ejecutar_simulacion(modo):
     print(f"=== inicio {modo} ===", flush=True)
     # r.flushall() # COMENTA ESTA LÍNEA para que Zipf aproveche lo que cargó Uniforme
@@ -76,14 +81,15 @@ def ejecutar_simulacion(modo):
             key = f"confidence_dist:{zona}:bins={bins}"
 
         # 4. Enviar y esperar un poco (El SLEEP que pediste)
-        enviar_a_sistema(key, tipo, zona, conf, zona_b, bins)
+        enviar_a_sistema(key, tipo, zona, conf, modo, zona_b, bins)
         time.sleep(0.05) # 50ms es suficiente para que el backend procese
 
     print(f"=== fin {modo} ===", flush=True)
+
+
 # --- FLUJO PRINCIPAL ---
 ejecutar_simulacion("uniforme")
-
-# Pequeña pausa entre experimentos para que el sistema de métricas procese
-time.sleep(5)
-
+time.sleep(5)   
 ejecutar_simulacion("zipf")
+
+
