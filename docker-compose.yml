@@ -33,6 +33,7 @@ services:
     build: ./trafico
     container_name: servicio_trafico
     environment:
+      - PYTHONUNBUFFERED=1
       - REDIS_HOST=cache
       - REDIS_PORT=6379
       - RESPUESTAS_HOST=generador_respuestas
