@@ -9,7 +9,7 @@ from statistics import mean
 
 print("Iniciando engine.py...")
  #cambie el host a "cache" para que se conecte al contenedor de redis, pero tiene que ir cache que es el nombre del servicio en el compose
-r = redis.Redis(host=os.getenv("REDIS_HOST", "cache"),port=int(os.getenv("REDIS_PORT", 6379)),decode_responses=True)
+r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"),port=int(os.getenv("REDIS_PORT", 6379)),decode_responses=True)
 
 ZONAS = {
     "Z1": {"lat_min": -33.445, "lat_max": -33.420, "lon_min": -70.640, "lon_max": -70.600},
@@ -31,7 +31,7 @@ data = {}
 picos = namedtuple("picos", ["latitude", "longitude", "area", "confidence"])
 
 def cargar_datos():
-    ruta = os.getenv("DATASET_PATH", "./buildings.csv") #cambiar el /app/data/buildints.csv
+    ruta = os.getenv("DATASET_PATH", "../dataset/buildings.csv") #cambiar el /app/data/buildints.csv
     print(f"Cargando dataset desde {ruta}...")
     df = pd.read_csv(ruta)
     print(f"Dataset cargado: {len(df)} registros")
