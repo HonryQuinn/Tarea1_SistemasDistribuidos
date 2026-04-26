@@ -51,9 +51,19 @@ def ejecutar_simulacion(modo):
             bins = random.choice([5, 10, 20])
             key = f"confidence_dist:{zona}:bins={bins}" 
             
-        enviar_a_sistema(key)
-        
-    print(f"=== fin {modo} ===")
+        # 4. Enviar y esperar un poco (El SLEEP que pediste)
+        enviar_a_sistema(key, tipo, zona, conf, zona_b, bins)
+        time.sleep(0.05) # 50ms es suficiente para que el backend procese
+
+    print(f"=== fin {modo} ===", flush=True)
+
+def esperar_engine():
+    print("Esperando a que el generado de respuesta cargue el dataset", flush=True)
+    while not r.get("status:engine_ready"):
+        time.sleep(2)
+    print("Dataset detectado, iniciando simulación")
+
+esperar_engine()
 
 # --- FLUJO PRINCIPAL ---
 ejecutar_simulacion("uniforme")

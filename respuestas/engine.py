@@ -116,6 +116,8 @@ def main():
     global data
     data = cargar_datos()
 
+    
+    r.set("status:engine_ready", "1")
     print("Generador de respuestas listo, escuchando cola...")
     while True:
         try:
