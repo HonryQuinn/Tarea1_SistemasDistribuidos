@@ -23,6 +23,7 @@ services:
       - REDIS_HOST=cache
       - REDIS_PORT=6379
       - DATASET_PATH=/app/data/buildings.csv
+      - FORCE_COLOR=1
     networks:
       - app-network
     depends_on:
@@ -37,6 +38,7 @@ services:
       - REDIS_HOST=cache
       - REDIS_PORT=6379
       - RESPUESTAS_HOST=generador_respuestas
+      - FORCE_COLOR=1
     volumes:
       - ./trafico:/app
     networks:
@@ -53,6 +55,7 @@ services:
     environment:
       - REDIS_HOST=cache
       - REDIS_PORT=6379
+      - FORCE_COLOR=1
     ports:
       - "8086:8086"
     networks:
@@ -60,6 +63,8 @@ services:
     depends_on:
       cache:
         condition: service_healthy
+    volumes:
+      - ./resultados:/app/resultados
 
 networks:
   app-network:

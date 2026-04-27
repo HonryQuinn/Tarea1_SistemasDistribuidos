@@ -6,6 +6,11 @@ import os
 import numpy as np
 from collections import namedtuple
 from statistics import mean
+from rich.console import Console
+from rich.status import Status
+from rich.panel import Panel
+
+console = Console()
 
 print("Iniciando engine.py...")
  #cambie el host a "cache" para que se conecte al contenedor de redis, pero tiene que ir cache que es el nombre del servicio en el compose
@@ -31,23 +36,21 @@ data = {}
 picos = namedtuple("picos", ["latitude", "longitude", "area", "confidence"])
 
 def cargar_datos():
-    ruta = os.getenv("DATASET_PATH", "../dataset/buildings.csv") #cambiar el /app/data/buildints.csv
-    print(f"Cargando dataset desde {ruta}...")
-    df = pd.read_csv(ruta)
-    print(f"Dataset cargado: {len(df)} registros")
+    with console.status("[bold yellow]Cargando dataset de edificios...", spinner="point"):
+        ruta = os.getenv("DATASET_PATH", "../dataset/buildings.csv") #cambiar el /app/data/buildints.csv
+        df = pd.read_csv(ruta)
 
-    datos_por_zona = {}
-    for zona_id, bbox in ZONAS.items():
-        filtrado = df[
-            (df["latitude"]  >= bbox["lat_min"]) & (df["latitude"]  <= bbox["lat_max"]) &
-            (df["longitude"] >= bbox["lon_min"]) & (df["longitude"] <= bbox["lon_max"])
-        ]
-        datos_por_zona[zona_id] = [
-            picos(row.latitude, row.longitude, row.area_in_meters, row.confidence)
-            for row in filtrado.itertuples()
-        ]
-        print(f"{zona_id}: {len(datos_por_zona[zona_id])} edificios")
-
+        datos_por_zona = {}
+        for zona_id, bbox in ZONAS.items():
+            filtrado = df[
+                (df["latitude"]  >= bbox["lat_min"]) & (df["latitude"]  <= bbox["lat_max"]) &
+                (df["longitude"] >= bbox["lon_min"]) & (df["longitude"] <= bbox["lon_max"])
+            ]
+            datos_por_zona[zona_id] = [
+                picos(row.latitude, row.longitude, row.area_in_meters, row.confidence)
+                for row in filtrado.itertuples()
+            ]
+    console.print(f"[bold green]✅ {len(df)} registros cargados y zonificados.[/bold green]")
     return datos_por_zona
 
 #consultas 
@@ -126,7 +129,7 @@ def main():
     data = cargar_datos()
 
     r.set("status:engine_ready","1")
-    print("Generador de respuestas listo, escuchando cola...")
+    console.print(Panel("[bold cyan]MOTOR DE RESPUESTAS ONLINE[/bold cyan]\n[dim]Escuchando cola:consultas...[/dim]", border_style="cyan"))
     while True:
         try:
             resultado = r.blpop("cola:consultas", timeout=30)

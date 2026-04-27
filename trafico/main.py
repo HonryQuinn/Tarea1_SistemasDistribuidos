@@ -3,18 +3,22 @@ import numpy as np
 import random
 import time
 import json
+from rich.console import Console
+from rich.progress import track # Esta es la forma más fácil de hacer barras
+from rich.panel import Panel
 
+console = Console()
 # Configuración inicial
 try:
     r = redis.Redis(host='cache', port=6379, decode_responses=True)
     r.ping()
-    print("conexin éxitosa con redis")
+    console.print(Panel("[bold green]✔[/bold green] Conexión exitosa con [bold cyan]Redis[/bold cyan]", border_style="green"))
 except redis.ConnectionError:
-    print("ño e pudo coñectar con redis")
+    console.print(Panel("[bold red]✘[/bold red] No se pudo conectar con [bold yellow]Redis[/bold yellow]", border_style="red"))
 
 ZONAS = ["Z1", "Z2", "Z3", "Z4", "Z5"] # [cite: 95]
 CONSULTAS = ["Q1", "Q2", "Q3", "Q4", "Q5"] # [cite: 35]
-N_PEDIDOS = 10 # Cantidad de consultas por experimento
+N_PEDIDOS = 1000 # Cantidad de consultas por experimento
 
 def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
     t0 = time.perf_counter()
@@ -27,11 +31,11 @@ def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
         r.incr(f"{modo}:hits") 
         r.rpush(f"{modo}:latencies", latencia_ms)
         r.rpush(f"{modo}:timestamps", time.time())
-        print(f"[HIT ] Key: {key}") 
+        console.print(f"[bold green]✔ HIT [/bold green] [white]{key}[/white] [dim]({latencia_ms:.2f}ms)[/dim]") 
     else:
         # --- CACHE MISS ---
         r.incr(f"{modo}:misses")
-        print(f"[MISS] Key: {key} -> Enviando a cola", flush=True)
+        console.print(f"[bold red]✘ MISS[/bold red] [white]{key}[/white] [dim]→ Motor[/dim]")
         
         datos_consulta = {
             "tipo": tipo,
@@ -43,18 +47,13 @@ def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
             "modo": modo # Ahora pasamos la variable correctamente
         }
         r.lpush("cola:consultas", json.dumps(datos_consulta))
-
-        for _ in range(20):       # máximo ~2 segundos
-            time.sleep(0.1)
-            if r.exists(key):
-                break
     
     # Métricas de desalojo (Evictions)
     info = r.info("stats")
     r.rpush(f"{modo}:evictions", f"{time.time()}:{info['evicted_keys']}")
 
 def ejecutar_simulacion(modo):
-    print(f"=== inicio {modo} ===", flush=True)
+    console.print(f"\n[bold reverse] INICIANDO SIMULACIÓN: {modo.upper()} [/bold reverse]\n")
     #r.flushall() # COMENTA ESTA LÍNEA para que Zipf aproveche lo que cargó Uniforme
 
     for _ in range(N_PEDIDOS):
@@ -89,13 +88,14 @@ def ejecutar_simulacion(modo):
         enviar_a_sistema(key, tipo, zona, conf, modo, zona_b, bins)
         time.sleep(0.05) # 50ms es suficiente para que el backend procese
 
-    print(f"=== fin {modo} ===", flush=True)
+    console.print(f"\n[bold green]🏁 Fin de la simulación {modo.upper()}[/bold green]")
+    console.print("[dim]──────────────────────────────────────────────────[/dim]\n")
 
 def esperar_engine():
-    print("Esperando a que el generado de respuesta cargue el dataset", flush=True)
-    while not r.get("status:engine_ready"):
-        time.sleep(2)
-    print("Dataset detectado, iniciando simulación")
+    with console.status("[bold yellow]Esperando a que el Motor cargue el dataset...", spinner="bouncingBar"):       
+        while not r.get("status:engine_ready"):
+            time.sleep(2)
+    console.print(Panel("✅ [bold green]Dataset detectado![/bold green] Preparando simulación...", border_style="bright_blue"))
 
 esperar_engine()
 

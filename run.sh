@@ -21,8 +21,8 @@ clear
 
 draw_header "INICIANDO BATERÍA DE EXPERIMENTOS"
 
+docker compose build
 
-# Ejemplo dentro de un bucle
 for tamano in "${TAMANOS[@]}"; do
     for politica in "${POLITICAS[@]}"; do
 	echo -e "\n${BLUE}┌──────────────────────────────────────────────────────────────┐${NC}"
@@ -37,11 +37,10 @@ for tamano in "${TAMANOS[@]}"; do
 	export REDIS_POLICY=$politica
 	
 	echo -e "${YELLOW} Desplegando contenedores Caché y Generador respuestas${NC}"
-	docker compose build metricas
-	docker compose up -d --remove-orphans cache generador_respuestas metricas
+	docker compose up -d cache generador_respuestas
 		
 	echo -e "${YELLOW} Ejecutando simulación de tráfico ${NC}"
-	docker compose run generador_trafico
+	docker compose run --remove-orphans generador_trafico
 
 	echo -e "${YELLOW} Imprimiendo métricas ${NC}"
 	docker compose run --remove-orphans metricas

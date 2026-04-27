@@ -1,6 +1,12 @@
 import redis
 import os
 import time
+import datetime
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+
+console = Console()
 
 r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=int(os.getenv("REDIS_PORT", 6379)), decode_responses=True)
 
@@ -8,6 +14,8 @@ def imprimir_resumen(modo):
     hits   = int(r.get(f"{modo}:hits") or 0)
     misses = int(r.get(f"{modo}:misses") or 0)
     total  = hits + misses
+
+    hit_rate = round((hits / total) * 100, 2) if total > 0 else 0
 
     lats = [float(x) for x in r.lrange(f"{modo}:latencies", 0, -1)]
     lats_sorted = sorted(lats)
@@ -28,16 +36,48 @@ def imprimir_resumen(modo):
         eviction_rate = ((float(c2) - float(c1)) / dt) * 60 if dt > 0 else 0.0
     else:
         eviction_rate = 0.0
+    
 
-    print(f"=== MÉTRICAS KLAS DE MIERDA {modo.upper()} ===")
-    print(f"  Hits:          {hits}")
-    print(f"  Misses:        {misses}")
-    print(f"  Hit rate:      {round(hits/total, 4) if total > 0 else 0}")
-    print(f"  Miss rate:     {round(misses/total, 4) if total > 0 else 0}")
-    print(f"  Latencia p50:  {p50} ms")
-    print(f"  Latencia p95:  {p95} ms")
-    print(f"  Throughput:    {round(throughput, 4)} qps")
-    print(f"  Eviction rate: {round(eviction_rate, 4)} ev/min")
+    os.makedirs('resultados', exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"resultados/metricas-{timestamp}.txt"
+    
+    with open(filename, 'a') as f:
+        f.write(f"\nSIMULACION: {modo.upper()}\n")
+        f.write("-" * 30 + "\n")
+        f.write(f"Hits: {hits} | Misses: {misses}\n")
+        f.write(f"Hit Rate: {hit_rate}%\n")
+        f.write(f"Latencia p50: {p50} ms | p95: {p95} ms\n")
+        f.write(f"Throughput: {throughput} qps\n")
+        f.write(f"Eviction Rate: {eviction_rate} ev/min\n")
+        f.write("-" * 30 + "\n")
+
+    table = Table(title=f"📊 Reporte de Simulación: {modo.upper()}", title_style="bold magenta", show_header=True, header_style="bold cyan")
+    
+    table.add_column("Métrica", style="dim")
+    table.add_column("Valor", justify="right", style="bold green")
+
+    table.add_row("Hits", str(hits))
+    table.add_row("Misses", str(misses))
+    table.add_row("Hit Rate", f"{round(hits/total*100, 2) if total > 0 else 0}%")
+    table.add_row("Latencia p50", f"{round(p50, 2) if p50 else 0} ms")
+    table.add_row("Latencia p95", f"{round(p95, 2) if p95 else 0} ms")
+    table.add_row("Throughput", f"{round(throughput, 4)} qps")
+    table.add_row("Eviction Rate", f"{round(eviction_rate, 4)} ev/min")
+
+    # Imprimimos un panel que contiene la tabla
+    console.print(Panel(table, expand=False, border_style="bright_blue"))
+    return filename
+
+    #print(f"=== MÉTRICAS KLAS DE MIERDA {modo.upper()} ===")
+    #print(f"  Hits:          {hits}")
+    #print(f"  Misses:        {misses}")
+    #print(f"  Hit rate:      {round(hits/total, 4) if total > 0 else 0}")
+    #print(f"  Miss rate:     {round(misses/total, 4) if total > 0 else 0}")
+    #print(f"  Latencia p50:  {p50} ms")
+    #print(f"  Latencia p95:  {p95} ms")
+    #print(f"  Throughput:    {round(throughput, 4)} qps")
+    #print(f"  Eviction rate: {round(eviction_rate, 4)} ev/min")
 
 # --- FLUJO PRINCIPAL ---
 
