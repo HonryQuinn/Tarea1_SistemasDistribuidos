@@ -11,18 +11,21 @@ console = Console()
 r = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=int(os.getenv("REDIS_PORT", 6379)), decode_responses=True)
 
 def imprimir_resumen(modo):
+    #Calculos base
     hits   = int(r.get(f"{modo}:hits") or 0)
     misses = int(r.get(f"{modo}:misses") or 0)
     total  = hits + misses
 
     hit_rate = round((hits / total) * 100, 2) if total > 0 else 0
-
+    
+    #Lateencias
     lats = [float(x) for x in r.lrange(f"{modo}:latencies", 0, -1)]
     lats_sorted = sorted(lats)
     n = len(lats_sorted)
     p50 = lats_sorted[int(n * 0.50)]             if n > 0 else None
     p95 = lats_sorted[min(int(n * 0.95), n - 1)] if n > 0 else None
-
+    
+    # Trhougput y evictions
     timestamps = [float(t) for t in r.lrange(f"{modo}:timestamps", 0, -1)]
     now = time.time()
     recent = [t for t in timestamps if t >= now - 60]
@@ -37,7 +40,7 @@ def imprimir_resumen(modo):
     else:
         eviction_rate = 0.0
     
-
+    # Crear archivo por experimento
     os.makedirs('resultados', exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"resultados/metricas-{timestamp}.txt"
@@ -65,7 +68,7 @@ def imprimir_resumen(modo):
     table.add_row("Throughput", f"{round(throughput, 4)} qps")
     table.add_row("Eviction Rate", f"{round(eviction_rate, 4)} ev/min")
 
-    # Imprimimos un panel que contiene la tabla
+    # Imprime un panel
     console.print(Panel(table, expand=False, border_style="bright_blue"))
     return filename
 
@@ -81,6 +84,6 @@ def imprimir_resumen(modo):
 
 # --- FLUJO PRINCIPAL ---
 
-time.sleep(10)  # espera que terminen ambas simulaciones (1000 * 0.05s * 2 + 5s pausa)
+time.sleep(10)  # espera que terminen ambas simulaciones
 imprimir_resumen("uniforme")
 imprimir_resumen("zipf")
