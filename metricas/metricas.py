@@ -41,6 +41,6 @@ def imprimir_resumen(modo):
 
 # --- FLUJO PRINCIPAL ---
 
-time.sleep(130)  # espera que terminen ambas simulaciones (1000 * 0.05s * 2 + 5s pausa)
+time.sleep(10)  # espera que terminen ambas simulaciones (1000 * 0.05s * 2 + 5s pausa)
 imprimir_resumen("uniforme")
 imprimir_resumen("zipf")

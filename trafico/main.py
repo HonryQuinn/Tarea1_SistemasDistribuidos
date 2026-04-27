@@ -11,12 +11,12 @@ try:
     print("conexin éxitosa con redis")
 except redis.ConnectionError:
     print("ño e pudo coñectar con redis")
-    print("ola")
+
 ZONAS = ["Z1", "Z2", "Z3", "Z4", "Z5"] # [cite: 95]
 CONSULTAS = ["Q1", "Q2", "Q3", "Q4", "Q5"] # [cite: 35]
-N_PEDIDOS = 1000 # Cantidad de consultas por experimento
+N_PEDIDOS = 10 # Cantidad de consultas por experimento
 
-def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=None):
+def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
     t0 = time.perf_counter()
     respuesta = r.get(key)
     latencia_ms = (time.perf_counter() - t0) * 1000
@@ -42,7 +42,12 @@ def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=None):
             "cache_key": key,
             "modo": modo # Ahora pasamos la variable correctamente
         }
-        r.lpush("cola_consultas", json.dumps(datos_consulta))
+        r.lpush("cola:consultas", json.dumps(datos_consulta))
+
+        for _ in range(20):       # máximo ~2 segundos
+            time.sleep(0.1)
+            if r.exists(key):
+                break
     
     # Métricas de desalojo (Evictions)
     info = r.info("stats")
@@ -50,7 +55,7 @@ def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=None):
 
 def ejecutar_simulacion(modo):
     print(f"=== inicio {modo} ===", flush=True)
-    # r.flushall() # COMENTA ESTA LÍNEA para que Zipf aproveche lo que cargó Uniforme
+    #r.flushall() # COMENTA ESTA LÍNEA para que Zipf aproveche lo que cargó Uniforme
 
     for _ in range(N_PEDIDOS):
         # 1. Selección de zona
@@ -86,6 +91,13 @@ def ejecutar_simulacion(modo):
 
     print(f"=== fin {modo} ===", flush=True)
 
+def esperar_engine():
+    print("Esperando a que el generado de respuesta cargue el dataset", flush=True)
+    while not r.get("status:engine_ready"):
+        time.sleep(2)
+    print("Dataset detectado, iniciando simulación")
+
+esperar_engine()
 
 # --- FLUJO PRINCIPAL ---
 ejecutar_simulacion("uniforme")

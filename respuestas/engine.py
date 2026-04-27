@@ -125,10 +125,15 @@ def main():
     global data
     data = cargar_datos()
 
+    r.set("status:engine_ready","1")
     print("Generador de respuestas listo, escuchando cola...")
     while True:
         try:
-            _, mensaje_crudo = r.blpop("cola_consultas", timeout=0)
+            resultado = r.blpop("cola:consultas", timeout=30)
+            if resultado is None:
+                continue
+
+            mensaje_crudo = resultado[1]
             consulta = json.loads(mensaje_crudo)
             procesar(consulta)
         except Exception as e:
