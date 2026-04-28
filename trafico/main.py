@@ -6,6 +6,7 @@ import json
 from rich.console import Console
 from rich.progress import track
 from rich.panel import Panel
+import os
 
 console = Console()
 # Configuración inicial
@@ -18,7 +19,7 @@ except redis.ConnectionError:
 
 ZONAS = ["Z1", "Z2", "Z3", "Z4", "Z5"] 
 CONSULTAS = ["Q1", "Q2", "Q3", "Q4", "Q5"] 
-N_PEDIDOS = 1000 # Cantidad de consultas por experimento
+N_PEDIDOS = 100000 # Cantidad de consultas por experimento
 
 def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
     t0 = time.perf_counter()
@@ -65,7 +66,7 @@ def ejecutar_simulacion(modo):
 
         # 2. Selección de tipo
         tipo = random.choice(CONSULTAS)
-        conf = round(random.uniform(0.0, 0.9), 2)
+        conf = round(random.uniform(0.0, 0.9), 3) #confianza entre 0.0 y 0.9 para evitar casos extremos que podrían no ser representativos
 
         # 3. Construcción de la Cache Key
         zona_b = None
@@ -85,7 +86,7 @@ def ejecutar_simulacion(modo):
 
         # 4. Enviar y esperar un poco
         enviar_a_sistema(key, tipo, zona, conf, modo, zona_b, bins)
-        time.sleep(0.05) # 50ms para que el backend procese
+        time.sleep(0.001) # 50ms para que el backend procese
 
     console.print(f"\n[bold green]🏁 Fin de la simulación {modo.upper()}[/bold green]")
     console.print("[dim]──────────────────────────────────────────────────[/dim]\n")
@@ -96,11 +97,15 @@ def esperar_engine():
             time.sleep(2)
     console.print(Panel("✅ [bold green]Dataset detectado![/bold green] Preparando simulación...", border_style="bright_blue"))
 
-esperar_engine()
-
-# --- FLUJO PRINCIPAL ---
-ejecutar_simulacion("uniforme")
-time.sleep(5)   
-ejecutar_simulacion("zipf")
+if __name__ == "__main__":
+    # 1. Esperamos al motor
+    esperar_engine() 
+    
+    # 2. Leemos qué modo queremos ejecutar (por defecto uniforme)
+    # Esto permite que run.sh controle la ejecución
+    modo = os.getenv("SIMULATION_MODE", "uniforme")
+    
+    # 3. Ejecutamos SOLO el modo solicitado
+    ejecutar_simulacion(modo)
 
 

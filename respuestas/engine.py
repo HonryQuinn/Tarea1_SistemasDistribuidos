@@ -109,7 +109,13 @@ def procesar(consulta):
     r.rpush(f"{modo}:latencies", (time.perf_counter() - t0) * 1000)
     r.rpush(f"{modo}:timestamps", time.time())
 
-    r.set(cache_key, json.dumps(resultado), ex=60)
+    padding = "x"*5120            #añadir para que sea más pesado y se note la diferencia entre hit y miss, actualmente es 5KB, pero se puede modificar para obtener el tamaño deseado
+    payload = {
+        "resultado": resultado,
+        "padding": padding
+    }
+
+    r.set(cache_key, json.dumps(payload), ex=3600)  #aquí se puede modificar para obtener el TTL deseado, actualmente es 60 segundos
     print(f"Calculado y guardado | {cache_key}")
 
 def esperar_redis():

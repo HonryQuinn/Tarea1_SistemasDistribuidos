@@ -5,6 +5,7 @@ import datetime
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+import os
 
 console = Console()
 
@@ -31,11 +32,15 @@ def imprimir_resumen(modo):
     recent = [t for t in timestamps if t >= now - 60]
     throughput = len(recent) / 60
 
-    evs = r.lrange(f"{modo}:evictions", -2, -1)
-    if len(evs) == 2:
-        t1, c1 = evs[0].split(":")
-        t2, c2 = evs[1].split(":")
+# Tomamos el primer registro [0] y el último [-1]
+    evs_first = r.lindex(f"{modo}:evictions", 0)
+    evs_last = r.lindex(f"{modo}:evictions", -1)
+
+    if evs_first and evs_last:
+        t1, c1 = evs_first.split(":")
+        t2, c2 = evs_last.split(":")
         dt = float(t2) - float(t1)
+        # Total de llaves borradas / tiempo total
         eviction_rate = ((float(c2) - float(c1)) / dt) * 60 if dt > 0 else 0.0
     else:
         eviction_rate = 0.0
@@ -83,7 +88,7 @@ def imprimir_resumen(modo):
     #print(f"  Eviction rate: {round(eviction_rate, 4)} ev/min")
 
 # --- FLUJO PRINCIPAL ---
+time.sleep(2) # Tiempo mínimo para asegurar que Redis procesó los últimos registros
+modo_objetivo = os.getenv("MODO_METRICAS", "uniforme")
 
-time.sleep(10)  # espera que terminen ambas simulaciones
-imprimir_resumen("uniforme")
-imprimir_resumen("zipf")
+imprimir_resumen(modo_objetivo)

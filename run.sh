@@ -36,18 +36,28 @@ for tamano in "${TAMANOS[@]}"; do
 	export REDIS_MAX_MEMORY=$tamano
 	export REDIS_POLICY=$politica
 	
-	echo -e "${YELLOW} Desplegando contenedores Caché y Generador respuestas${NC}"
+	echo -e "${YELLOW} Desplegando infraestructura base...${NC}"
 	docker compose up -d cache generador_respuestas
-		
-	echo -e "${YELLOW} Ejecutando simulación de tráfico ${NC}"
-	docker compose run --remove-orphans generador_trafico
 
-	echo -e "${YELLOW} Imprimiendo métricas ${NC}"
-	docker compose run --remove-orphans metricas
+# --- FASE 1: UNIFORME ---
+	echo -e "${CYAN} > Ejecutando Simulación UNIFORME...${NC}"
+	docker compose run --rm -e SIMULATION_MODE=uniforme generador_trafico
+	echo -e "${GREEN} > Generando Reporte UNIFORME...${NC}"
+	docker compose run --rm -e MODO_METRICAS=uniforme metricas
 
-	echo -e "${GREEN}Simulación completada para $tamano - $politica${NC}"
+# --- TRANSICIÓN CRÍTICA ---
+# Forzamos al motor a reiniciarse para que vuelva a poner 'status:engine_ready' en Redis.
+# Esto es necesario porque la simulación anterior probablemente borró esa llave por la política LRU/LFU.
+	echo -e "${YELLOW} Re-sincronizando motor para distribución ZIPF...${NC}"
+	docker compose restart generador_respuestas
 
-	echo -e "${YELLOW}Limpiando volúmenes y contenedores...${NC}"
+# --- FASE 2: ZIPF ---
+	echo -e "${CYAN} > Ejecutando Simulación ZIPF...${NC}"
+	docker compose run --rm -e SIMULATION_MODE=zipf generador_trafico
+	echo -e "${GREEN} > Generando Reporte ZIPF...${NC}"
+	docker compose run --rm -e MODO_METRICAS=zipf metricas
+
+	echo -e "${GREEN} Simulación completada para $tamano - $politica ${NC}"
 	docker compose down -v
    done
 done

@@ -1,0 +1,18 @@
+
+SIMULACION: UNIFORME
+------------------------------
+Hits: 281 | Misses: 719
+Hit Rate: 28.1%
+Latencia p50: 2.6873320000504464 ms | p95: 18.89540900015163 ms
+Throughput: 0.0 qps
+Eviction Rate: 0.0 ev/min
+------------------------------
+
+SIMULACION: ZIPF
+------------------------------
+Hits: 394 | Misses: 606
+Hit Rate: 39.4%
+Latencia p50: 2.331049000076746 ms | p95: 16.7942220000441 ms
+Throughput: 14.733333333333333 qps
+Eviction Rate: 0.0 ev/min
+------------------------------
