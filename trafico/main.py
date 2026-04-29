@@ -66,7 +66,7 @@ def ejecutar_simulacion(modo):
 
         # 2. Selección de tipo
         tipo = random.choice(CONSULTAS)
-        conf = round(random.uniform(0.0, 0.9), 3) #confianza entre 0.0 y 0.9 para evitar casos extremos que podrían no ser representativos
+        conf = round(random.uniform(0.0, 0.9), 4) #confianza entre 0.0 y 0.9 para evitar casos extremos que podrían no ser representativos
 
         # 3. Construcción de la Cache Key
         zona_b = None

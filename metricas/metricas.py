@@ -60,7 +60,7 @@ def imprimir_resumen(modo):
         f.write(f"Eviction Rate: {eviction_rate} ev/min\n")
         f.write("-" * 30 + "\n")
 
-    table = Table(title=f"📊 Reporte de Simulación: {modo.upper()}", title_style="bold magenta", show_header=True, header_style="bold cyan")
+    table = Table(title=f" Reporte de Simulación: {modo.upper()}", title_style="bold magenta", show_header=True, header_style="bold cyan")
     
     table.add_column("Métrica", style="dim")
     table.add_column("Valor", justify="right", style="bold green")

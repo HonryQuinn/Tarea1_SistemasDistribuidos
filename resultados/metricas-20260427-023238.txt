@@ -1,4 +1,0 @@
-
-SIMULACION: UNIFORME
-------------------------------
-Hits: 423 | Misses: 2577

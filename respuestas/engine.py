@@ -36,22 +36,38 @@ data = {}
 picos = namedtuple("picos", ["latitude", "longitude", "area", "confidence"])
 
 def cargar_datos():
-    with console.status("[bold yellow]Cargando dataset de edificios...", spinner="point"):
-        ruta = os.getenv("DATASET_PATH", "../dataset/buildings.csv") #cambiar el /app/data/buildints.csv
-        df = pd.read_csv(ruta)
+    with console.status("[bold yellow]Cargando y filtrando subconjunto de Santiago...", spinner="point"):
+        ruta = os.getenv("DATASET_PATH", "../dataset/buildings.csv") #
+        df = pd.read_csv(ruta) #
+
+        #Definimos los límites globales basados en la tabla del PDF (Z1 a Z5)
+        # Estos valores cubren desde Maipú hasta Las Condes y desde Pudahuel hasta Providencia
+        lat_min, lat_max = -33.530, -33.390 # [cite: 95]
+        lon_min, lon_max = -70.810, -70.550 # [cite: 95]
+
+        # 3. Creamos un subconjunto que solo contenga los edificios de Santiago
+        # Esto reduce el dataset de millones a solo los necesarios para la tarea
+        df_santiago = df[
+            (df["latitude"]  >= lat_min) & (df["latitude"]  <= lat_max) &
+            (df["longitude"] >= lon_min) & (df["longitude"] <= lon_max)
+        ].copy() #
 
         datos_por_zona = {}
-        for zona_id, bbox in ZONAS.items():
-            filtrado = df[
-                (df["latitude"]  >= bbox["lat_min"]) & (df["latitude"]  <= bbox["lat_max"]) &
-                (df["longitude"] >= bbox["lon_min"]) & (df["longitude"] <= bbox["lon_max"])
-            ]
+        for zona_id, bbox in ZONAS.items(): #
+            # 4. Ahora filtramos sobre el subconjunto pequeño, lo cual es mucho más rápido
+            filtrado = df_santiago[
+                (df_santiago["latitude"]  >= bbox["lat_min"]) & (df_santiago["latitude"]  <= bbox["lat_max"]) &
+                (df_santiago["longitude"] >= bbox["lon_min"]) & (df_santiago["longitude"] <= bbox["lon_max"])
+            ] #
+            
             datos_por_zona[zona_id] = [
                 picos(row.latitude, row.longitude, row.area_in_meters, row.confidence)
                 for row in filtrado.itertuples()
-            ]
-    console.print(f"[bold green]✅ {len(df)} registros cargados y zonificados.[/bold green]")
-    return datos_por_zona
+            ] #
+            
+    # Al finalizar, informamos cuántos edificios quedaron en las zonas de estudio
+    console.print(f"[bold green]✅ Subconjunto cargado: {len(df_santiago)} edificios en las 5 zonas.[/bold green]")
+    return datos_por_zona #
 
 #consultas 
 
@@ -109,7 +125,7 @@ def procesar(consulta):
     r.rpush(f"{modo}:latencies", (time.perf_counter() - t0) * 1000)
     r.rpush(f"{modo}:timestamps", time.time())
 
-    padding = "x"*5120            #añadir para que sea más pesado y se note la diferencia entre hit y miss, actualmente es 5KB, pero se puede modificar para obtener el tamaño deseado
+    padding = "x"*15360        # 15 KB 
     payload = {
         "resultado": resultado,
         "padding": padding
