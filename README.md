@@ -1,7 +1,7 @@
 # Tarea 1: sistemas distribuidos
 **Autores**: Enzo Rodriguez y Alonso Iturra
 Este proyecto es un simulador de caché que evalúa el rendimiento de diferentes tamaños de cache y políticas de reemplazo (**LFU** y **LRU**), siguiendo 2 tipos de distribuciones de consultas (Uniforme y Zipf).
-Antes de empezar, es necesario tener
+Antes de empezar, es necesario tener:
 -  Git
 -  Docker
 -  Bash
@@ -35,9 +35,9 @@ Una vez descargado el repositorio se debería ver la siguiente estructura:
 El código avisa si encuentra o no el dataset
 ## Paso 3: Correr simulación
 Para iniciar el proceso de pruebas automáticas, ejecuta el script principal con privilegios de administrador:
-̀ ̀ ̀ bash
+```bash
 sudo bash run.sh
-̀ ̀ ̀
+```
 Simplemente dejé correr el script, automaticamente generará un txt con los resultados obtenidos para cada configuración y distribución
 # Resultados esperados
 El código mostrará una tabla con las siguientes métricas:
