@@ -9,7 +9,7 @@ Antes de empezar, es necesario tener
 En cualquier carpeta correr:
 ```bash
 git clone https://github.com/HonryQuinn/Tarea1_SistemasDistribuidos.git
-cd
+cd Tarea1_SistemasDistribuidos/
 ``` 
 ## Paso 2: Añadir dataset
 Una vez descargado el repositorio se debería ver la siguiente estructura:
