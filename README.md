@@ -7,13 +7,13 @@ Antes de empezar, es necesario tener
 -  Bash
 ## Paso 1: Clonar el repositorio
 En cualquier carpeta correr:
-̀ ̀ ̀ bash
+```bash
 git clone https://github.com/HonryQuinn/Tarea1_SistemasDistribuidos.git
 cd
-̀ ̀ ̀ 
+``` 
 ## Paso 2: Añadir dataset
 Una vez descargado el repositorio se debería ver la siguiente estructura:
- ̀ ̀ bash
+ ```
 .
 ├── dataset
 │   └── buildings.csv  <-- Aquí debe ir el dataset!
@@ -30,7 +30,7 @@ Una vez descargado el repositorio se debería ver la siguiente estructura:
 └── trafico
     ├── Dockerfile
     └── main.py
-̀ ̀ ̀ 
+```
 **Importante**: el dataset debe estar descomprimido y en la ruta dataset, debería verse como en la estructura anterior.
 El código avisa si encuentra o no el dataset
 ## Paso 3: Correr simulación
