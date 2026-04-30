@@ -31,11 +31,11 @@ def enviar_a_sistema(key, tipo, zona, conf, modo, zona_b=None, bins=5):
         r.incr(f"{modo}:hits") 
         r.rpush(f"{modo}:latencies", latencia_ms)
         r.rpush(f"{modo}:timestamps", time.time())
-        console.print(f"[bold green]✔ HIT [/bold green] [white]{key}[/white] [dim]({latencia_ms:.2f}ms)[/dim]") 
+        console.print(f"[bold green]+ HIT [/bold green] [white]{key}[/white] [dim]({latencia_ms:.2f}ms)[/dim]") 
     else:
         #CACHE MISS
         r.incr(f"{modo}:misses")
-        console.print(f"[bold red]✘ MISS[/bold red] [white]{key}[/white] [dim]→ Motor[/dim]")
+        console.print(f"[bold red]- MISS[/bold red] [white]{key}[/white] [dim]→ Motor[/dim]")
         
         datos_consulta = {
             "tipo": tipo,
@@ -88,24 +88,20 @@ def ejecutar_simulacion(modo):
         enviar_a_sistema(key, tipo, zona, conf, modo, zona_b, bins)
         time.sleep(0.001) # 50ms para que el backend procese
 
-    console.print(f"\n[bold green]🏁 Fin de la simulación {modo.upper()}[/bold green]")
+    console.print(f"\n[bold green] Fin de la simulación {modo.upper()}[/bold green]")
     console.print("[dim]──────────────────────────────────────────────────[/dim]\n")
 
 def esperar_engine():
     with console.status("[bold yellow]Esperando a que el Motor cargue el dataset...", spinner="bouncingBar"):       
         while not r.get("status:engine_ready"):
             time.sleep(2)
-    console.print(Panel("✅ [bold green]Dataset detectado![/bold green] Preparando simulación...", border_style="bright_blue"))
+    console.print(Panel(" [bold green]Dataset detectado[/bold green] Preparando simulación...", border_style="bright_blue"))
 
 if __name__ == "__main__":
-    # 1. Esperamos al motor
     esperar_engine() 
     
-    # 2. Leemos qué modo queremos ejecutar (por defecto uniforme)
-    # Esto permite que run.sh controle la ejecución
     modo = os.getenv("SIMULATION_MODE", "uniforme")
-    
-    # 3. Ejecutamos SOLO el modo solicitado
+
     ejecutar_simulacion(modo)
 
 

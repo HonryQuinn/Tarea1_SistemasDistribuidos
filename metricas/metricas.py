@@ -17,9 +17,10 @@ def imprimir_resumen(modo):
     misses = int(r.get(f"{modo}:misses") or 0)
     total  = hits + misses
 
+    # Hit Rate
     hit_rate = round((hits / total) * 100, 2) if total > 0 else 0
     
-    #Lateencias
+    #Latencias
     lats = [float(x) for x in r.lrange(f"{modo}:latencies", 0, -1)]
     lats_sorted = sorted(lats)
     n = len(lats_sorted)
@@ -32,10 +33,10 @@ def imprimir_resumen(modo):
     recent = [t for t in timestamps if t >= now - 60]
     throughput = len(recent) / 60
 
-# Tomamos el primer registro [0] y el último [-1]
     evs_first = r.lindex(f"{modo}:evictions", 0)
     evs_last = r.lindex(f"{modo}:evictions", -1)
 
+    # Eviction rate: (evs_last - evs_first) / (t_last - t_first) * 60
     if evs_first and evs_last:
         t1, c1 = evs_first.split(":")
         t2, c2 = evs_last.split(":")
@@ -73,22 +74,10 @@ def imprimir_resumen(modo):
     table.add_row("Throughput", f"{round(throughput, 4)} qps")
     table.add_row("Eviction Rate", f"{round(eviction_rate, 4)} ev/min")
 
-    # Imprime un panel
     console.print(Panel(table, expand=False, border_style="bright_blue"))
     return filename
 
-    #print(f"=== MÉTRICAS KLAS DE MIERDA {modo.upper()} ===")
-    #print(f"  Hits:          {hits}")
-    #print(f"  Misses:        {misses}")
-    #print(f"  Hit rate:      {round(hits/total, 4) if total > 0 else 0}")
-    #print(f"  Miss rate:     {round(misses/total, 4) if total > 0 else 0}")
-    #print(f"  Latencia p50:  {p50} ms")
-    #print(f"  Latencia p95:  {p95} ms")
-    #print(f"  Throughput:    {round(throughput, 4)} qps")
-    #print(f"  Eviction rate: {round(eviction_rate, 4)} ev/min")
-
-# --- FLUJO PRINCIPAL ---
-time.sleep(2) # Tiempo mínimo para asegurar que Redis procesó los últimos registros
+time.sleep(2) 
 modo_objetivo = os.getenv("MODO_METRICAS", "uniforme")
 
 imprimir_resumen(modo_objetivo)

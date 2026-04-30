@@ -66,7 +66,7 @@ def cargar_datos():
             ] #
             
     # Al finalizar, informamos cuántos edificios quedaron en las zonas de estudio
-    console.print(f"[bold green]✅ Subconjunto cargado: {len(df_santiago)} edificios en las 5 zonas.[/bold green]")
+    console.print(f"[bold green] Subconjunto cargado: {len(df_santiago)} edificios en las 5 zonas.[/bold green]")
     return datos_por_zona #
 
 #consultas 
@@ -131,7 +131,7 @@ def procesar(consulta):
         "padding": padding
     }
 
-    r.set(cache_key, json.dumps(payload), ex=3600)  #aquí se puede modificar para obtener el TTL deseado, actualmente es 60 segundos
+    r.set(cache_key, json.dumps(payload), ex=3600)  # TTL de 1 hora para evitar que la cache se llene con datos antiguos
     print(f"Calculado y guardado | {cache_key}")
 
 def esperar_redis():
@@ -150,7 +150,7 @@ def main():
     global data
     data = cargar_datos()
 
-    r.set("status:engine_ready","1")
+    r.set("status:engine_ready","1") # Indicamos al tráfico que el engine está listo para recibir consultas
     console.print(Panel("[bold cyan]MOTOR DE RESPUESTAS ONLINE[/bold cyan]\n[dim]Escuchando cola:consultas...[/dim]", border_style="cyan"))
     while True:
         try:
