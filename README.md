@@ -1,5 +1,6 @@
 # Tarea 1: sistemas distribuidos
 **Autores**: Enzo Rodriguez y Alonso Iturra
+
 Este proyecto es un simulador de caché que evalúa el rendimiento de diferentes tamaños de cache y políticas de reemplazo (**LFU** y **LRU**), siguiendo 2 tipos de distribuciones de consultas (Uniforme y Zipf).
 Antes de empezar, es necesario tener:
 -  Git
